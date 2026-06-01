@@ -238,19 +238,9 @@ currentProcess++
         const perintahFfmpeg = `ffmpeg -i "${file.path}" -vf "scale='if(gte(iw,ih),-2,720)':'if(gte(iw,ih),720,-2)',hqdn3d=1.0:1.0:2.0:2.0,unsharp=3:3:0.4:3:3:0.4" -r 60 -c:v libx264 -preset faster -crf 17 -aq-mode 3 -colorspace bt709 -color_trc bt709 -color_primaries bt709 -maxrate 12M -bufsize 12M -pix_fmt yuv420p -threads 2 -c:a aac -b:a 128k -movflags +faststart "${normalized}"`
         
 
-        const domainPenyedia = req.get("host");
-        const protocolPenyedia = req.protocol;
-        const resultUrl = `${protocolPenyedia}://${domainPenyedia}/video/${outputFilename}`;
-
-        global.results.push({
-            url: resultUrl,
-            nomor: nomor,
-            time: Date.now()
-        });
 
         res.json({
             status: true,
-            url: resultUrl,
             message: "Video diterima! Lagi diproses di background, tunggu di grup ya bre."
         });
 
@@ -272,7 +262,18 @@ currentProcess++
                 return;
             }
 
-            console.log(`[DanzClean Sukses]: Video ${outputFilename} selesai dirender & dikirim!`);
+
+            const domainPenyedia = req.get("host");
+            const protocolPenyedia = req.protocol;
+            const resultUrl = `${protocolPenyedia}://${domainPenyedia}/video/${outputFilename}`;
+
+            global.results.push({
+                url: resultUrl,
+                nomor: nomor,
+                time: Date.now()
+            });
+
+            console.log(`[DanzClean Sukses]: Video ${outputFilename} matang & siap dikirim oleh main.js!`);
         });
 
     } catch (e) {
