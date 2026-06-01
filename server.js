@@ -25,9 +25,19 @@ app.use("/video", express.static(path.join(__dirname, "public")))
 const upload = multer({ dest: "uploads/" })
 
 global.results = []
+global.videoProgress = {} 
 
 app.get("/", (req, res) => {
     res.send("API READY")
+})
+
+
+app.get("/api/progress", (req, res) => {
+    const id = req.query.id
+    if (!id || !global.videoProgress[id]) {
+        return res.json({ status: false, progress: 0, message: "ID tidak ditemukan" })
+    }
+    res.json(global.videoProgress[id])
 })
 
 app.get("/results", (req, res) => {
@@ -35,6 +45,7 @@ app.get("/results", (req, res) => {
     global.results = []
     res.json(data)
 })
+
 //jsjsjzjjdjd
 app.post("/api/upload", upload.single("video"), async (req, res) => {
     const file = req.file
@@ -235,13 +246,15 @@ if (currentProcess >= MAX_PROCESS) {
 
 currentProcess++
 
-        const perintahFfmpeg = `ffmpeg -i "${file.path}" -vf "scale='if(gte(iw,ih),-2,720)':'if(gte(iw,ih),720,-2)',hqdn3d=1.0:1.0:2.0:2.0,unsharp=3:3:0.4:3:3:0.4" -r 60 -c:v libx264 -preset faster -crf 17 -aq-mode 3 -colorspace bt709 -color_trc bt709 -color_primaries bt709 -maxrate 12M -bufsize 12M -pix_fmt yuv420p -threads 2 -c:a aac -b:a 128k -movflags +faststart "${normalized}"`
-        
+
+        const videoId = `vid_${Date.now()}`
+        global.videoProgress[videoId] = { status: "proses", message: "Sedang mengompres video jadi HD..." }
 
 
         res.json({
             status: true,
-            message: "Video diterima! Lagi diproses di background, tunggu di grup ya bre."
+            id: videoId,
+            message: "Video diterima server Railway! Memulai render..."
         });
 
 
@@ -259,13 +272,17 @@ currentProcess++
 
             if (err) {
                 console.log("[DanzClean Background Error]:", err.message);
+                global.videoProgress[videoId] = { status: "error", message: "Gagal memproses video: " + err.message }
                 return;
             }
-
 
             const domainPenyedia = req.get("host");
             const protocolPenyedia = req.protocol;
             const resultUrl = `${protocolPenyedia}://${domainPenyedia}/video/${outputFilename}`;
+
+
+            global.videoProgress[videoId] = { status: "selesai", message: "Video HD Matang!", url: resultUrl }
+
 
             global.results.push({
                 url: resultUrl,
