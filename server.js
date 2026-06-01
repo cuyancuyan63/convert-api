@@ -235,9 +235,6 @@ const targetFps =
         ? fpsVideo
         : 60
 
-console.log(
-    `[FPS] Input: ${fpsVideo} | Output: ${targetFps}`
-)
 if (currentProcess >= MAX_PROCESS) {
     await new Promise(resolve => {
         waitingQueue.push(resolve)
@@ -246,6 +243,8 @@ if (currentProcess >= MAX_PROCESS) {
 
 currentProcess++
 
+
+        const perintahFfmpeg = `ffmpeg -i "${file.path}" -vf "scale='if(gte(iw,ih),-2,720)':'if(gte(iw,ih),720,-2)',hqdn3d=1.0:1.0:2.0:2.0,unsharp=3:3:0.4:3:3:0.4" -r ${targetFps} -c:v libx264 -preset faster -crf 17 -aq-mode 3 -colorspace bt709 -color_trc bt709 -color_primaries bt709 -maxrate 12M -bufsize 12M -pix_fmt yuv420p -threads 2 -c:a aac -b:a 128k -movflags +faststart "${normalized}"`
 
         const videoId = `vid_${Date.now()}`
         global.videoProgress[videoId] = { status: "proses", message: "Sedang mengompres video jadi HD..." }
@@ -280,10 +279,10 @@ currentProcess++
             const protocolPenyedia = req.protocol;
             const resultUrl = `${protocolPenyedia}://${domainPenyedia}/video/${outputFilename}`;
 
-
+            
             global.videoProgress[videoId] = { status: "selesai", message: "Video HD Matang!", url: resultUrl }
 
-
+            
             global.results.push({
                 url: resultUrl,
                 nomor: nomor,
@@ -294,21 +293,25 @@ currentProcess++
         });
 
     } catch (e) {
+        if (currentProcess > 0) {
+            currentProcess--
+        }
 
-    if (currentProcess > 0) {
-        currentProcess--
-    }
-
-if (waitingQueue.length > 0) {
-    const next = waitingQueue.shift()
-    next()
-}
-        console.log(e)
+        if (waitingQueue.length > 0) {
+            const next = waitingQueue.shift()
+            next()
+        }
+        
+        console.log("[DanzClean Catch Error]:", e.message)
         if (file && fs.existsSync(file.path)) fs.unlinkSync(file.path)
-        res.json({
-            status: false,
-            error: "Gagal memproses HD video: " + e.message
-        })
+        
+
+        if (!res.headersSent) {
+            res.json({
+                status: false,
+                error: "Gagal memproses HD video: " + e.message
+            })
+        }
     }
 })
 
