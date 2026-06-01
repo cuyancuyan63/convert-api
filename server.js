@@ -9,7 +9,7 @@ const FormData = require("form-data")
 const app = express()
 
 app.use(cors({
-    origin: ["convert-api-production.up.railway.app"],
+    origin: ["https://convert-api-production.up.railway.app"],
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "authorization"]
 }))
