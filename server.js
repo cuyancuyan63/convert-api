@@ -1,296 +1,773 @@
-const express = require("express")
-const multer = require("multer")
-const cors = require("cors")
-const fs = require("fs")
-const axios = require("axios")
-const { exec } = require("child_process")
-const path = require("path")
-const FormData = require("form-data")
-const app = express()
 
-app.use(cors({
-    origin: ["https://danzclean.arisu.biz.id"],
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "authorization"]
-}))
+<!DOCTYPE html>
+<html lang="id">
 
-app.options("*", cors())
-app.use(express.json())
+<head>
+<style>
+body{
+display:none;
+}
+</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DanzClean - Upload Status WhatsApp HD Tanpa Blur</title>
 
-if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
-if (!fs.existsSync("public")) fs.mkdirSync("public");
+<meta name="description" content="DanzClean adalah tools upload Status WhatsApp HD tanpa blur. Upload video status WA dengan kualitas jernih, gratis, cepat, dan mudah digunakan.">
 
-app.use("/video", express.static(path.join(__dirname, "public")))
+<meta name="keywords" content="DanzClean, status whatsapp hd, upload status wa hd, status whatsapp tidak blur, uploader status whatsapp">
+<link rel="icon" href="/favicon.png" type="image/png">
+    <meta property="og:title" content="DanzClean - HD Status Uploader">
+    <meta property="og:description" content="Upload video status WhatsApp tanpa pecah, jernih, dan cepat.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/xyron11/DB-PHOTO/main/Proyek%20Baru%20233%20%5BEB85C59%5D.png">
+    <meta property="og:type" content="website">
 
-const upload = multer({ dest: "uploads/" })
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>
 
-global.results = []
-
-app.get("/", (req, res) => {
-    res.send("API READY")
-})
-
-app.get("/results", (req, res) => {
-    const data = [...global.results]
-    global.results = []
-    res.json(data)
-})
-//jsjsjzjjdjd
-app.post("/api/upload", upload.single("video"), async (req, res) => {
-    const file = req.file
-    const nomor = req.body.nomor
-
-    try {
-        if (!file) return res.json({ status: false, error: "File kosong" })
-        if (!nomor) {
-            if (fs.existsSync(file.path)) fs.unlinkSync(file.path)
-            return res.json({ status: false, error: "Nomor kosong" })
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 8, 28, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
 
-        const form = new FormData()
-        form.append("video", fs.createReadStream(file.path), {
-            filename: file.originalname,
-            contentType: file.mimetype
-        })
-        form.append("nomor", nomor)
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
-        const tokenTokenan = `Bearer ${Buffer.from("DANZZ").toString("base64")}`;
+        .modal-card {
+            background: linear-gradient(135deg, #13193e, #0b0f2a);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 30px 24px;
+            width: 85%;
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(61, 108, 255, 0.15);
+            transform: scale(0.7);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
 
+        .modal-overlay.show .modal-card {
+            transform: scale(1);
+        }
 
-        const targetPort = process.env.PORT || 3000; 
+        .modal-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: inline-block;
+            animation: pulseIcon 2s infinite ease-in-out;
+        }
 
+        .modal-title {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-family: 'Poppins', sans-serif;
+        }
 
-        const responUtama = await axios.post(`http://127.0.0.1:${targetPort}/upload`, form, {
-            headers: {
-                ...form.getHeaders(),
-                "authorization": tokenTokenan
-            },
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity
-        })
+        .modal-text {
+            color: #9ea7d6;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 24px;
+            font-family: 'Poppins', sans-serif;
+        }
 
-        if (fs.existsSync(file.path)) fs.unlinkSync(file.path)
-        return res.json(responUtama.data)
+        .modal-btn {
+            background: linear-gradient(135deg, #3d6cff, #1e45c7);
+            color: #ffffff;
+            border: none;
+            border-radius: 14px;
+            padding: 12px 32px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(61, 108, 255, 0.3);
+            transition: all 0.2s ease;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-    } catch (error) {
-        if (file && fs.existsSync(file.path)) fs.unlinkSync(file.path)
-        console.log("[DanzClean Proxy Error]: ", error.message)
-        return res.json({ status: false, error: "Gagal menjembatani request: " + error.message })
-    }
-})
-//=======
-const dapatkanDurasiVideo = (filePath) => {
+        .modal-btn:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 6px rgba(61, 108, 255, 0.2);
+        }
 
+        .modal-btn-group {
+            background: linear-gradient(135deg, #00ffaa, #00b377);
+            color: #05081c;
+            margin-top: 10px;
+            display: inline-block;
+            text-decoration: none;
+            line-height: 45px;
+            height: 45px;
+            padding: 0;
+            box-shadow: 0 4px 12px rgba(0, 255, 170, 0.3);
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            width: 100%;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-    return new Promise((resolve, reject) => {
-        exec(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nocreval=1 "${filePath}"`, (err, stdout) => {
-            if (err) return resolve(30);
-            const durasi = parseFloat(stdout.trim());
-            resolve(isNaN(durasi) ? 30 : durasi);
+        .loading-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #00ffaa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        input[disabled] {
+            background: rgba(255, 255, 255, 0.02) !important;
+            color: rgba(255, 255, 255, 0.3) !important;
+            border-color: rgba(255, 255, 255, 0.03) !important;
+            cursor: not-allowed;
+            transition: all 0.3s ease;
+        }
+
+        .upload-box {
+            transition: all 0.3s ease;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulseIcon {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="topbar">
+
+        <div class="menu-btn dashboard-menu" onclick="toggleMenu()">☰</div>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-box">
+                <img src="https://raw.githubusercontent.com/xyron11/DB-PHOTO/main/Proyek%20Baru%20231%20%5B93ADA1D%5D.png">
+            </div>
+        </div>
+        <a href="/">
+            <img src="https://raw.githubusercontent.com/xyron11/DB-PHOTO/main/Picsart_26-05-16_18-37-06-405.png"> Dashboard
+        </a>
+        <a href="https://whatsapp.com/channel/0029VbCPkeX2UPBEbTumgG2Y" target="_blank">
+            <img src="https://raw.githubusercontent.com/xyron11/DB-PHOTO/main/Proyek%20Baru%20227%20%5B6DBBE35%5D.png"> Channel WhatsApp
+        </a>
+        <a href="/creator">
+            <img src="https://raw.githubusercontent.com/xyron11/DB-PHOTO/main/Proyek%20Baru%20228%20%5B8DED6AA%5D.png"> Creator
+        </a>
+        <a href="/stats">
+            <img src="https://raw.githubusercontent.com/xyron11/DB-PHOTO/main/Proyek%20Baru%20232%20%5BAEABB89%5D.png"> Statistik
+        </a>
+<a href="/rating.html">
+<img src="https://raw.githubusercontent.com/xyron11/DB-PHOTO/main/Proyek%20Baru%20270%20%5BFB81C6E%5D.png">
+Rating
+</a>
+        <a href="/maintenance.html" id="maintenanceBtn" style="display:none;">
+    Perbaikan
+</a>
+
+<a href="#" id="logoutOwnerBtn" style="display:none;">
+    Logout Owner
+</a>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <div class="container">
+        <div class="logo">
+            <h1>DanzClean</h1>
+            <p>HD Status Uploader</p>
+        </div>
+
+        <label for="file" class="upload-box">
+            <div class="icon">
+                <img src="https://raw.githubusercontent.com/xyron11/DB-PHOTO/main/Proyek%20Baru%20230%20%5B30A68CC%5D.png">
+            </div>
+            <p id="file-name">Tap di sini buat masukin video</p>
+            <input type="file" id="file" accept="video/*" hidden>
+        </label>
+
+        <input type="text" id="nomor" placeholder="Contoh: 628xxxx">
+
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAADQlj_kkJ1cpQ9ur" id="cfWidget" style="margin-bottom: 20px; display: flex; justify-content: center;"></div>
+
+        <button id="uploadBtn" onclick="upload()">UPLOAD NOW</button>
+
+        <div id="status">Waiting upload...</div>
+
+        <div class="footer">DanzClean</div>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-card">
+            <div class="modal-icon" id="modalIcon">⚠️</div>
+            <div class="modal-title" id="modalTitle">Perhatian</div>
+            <div class="modal-text" id="modalText">Pesan peringatan sistem akan muncul di sini.</div>
+            <div id="modalActionContainer">
+                <button class="modal-btn" onclick="closeModal()">Kembali</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = "https://convert-api-production.up.railway.app";
+        
+        let isCurrentlyUploading = false;
+
+        window.addEventListener("beforeunload", (e) => {
+            if (isCurrentlyUploading) {
+                e.preventDefault();
+                e.returnValue = "Proses upload video sedang berjalan. Apakah Anda yakin ingin keluar?";
+            }
         });
-    });
-};
 
-let currentProcess = 0
-const MAX_PROCESS = 2
-const waitingQueue = []
+        document.getElementById("file").addEventListener("change", e => {
+            const file = e.target.files[0];
+            document.getElementById("file-name").innerText = file ? file.name : "Tap di sini buat masukin video";
+        });
 
-app.post("/upload", upload.single("video"), async (req, res) => {
-    const authHeader = req.headers.authorization;
-    const tokenDiharapkan = `Bearer ${Buffer.from("DANZZ").toString("base64")}`;
-
-    if (!authHeader || authHeader !== tokenDiharapkan) {
-        return res.status(403).json({ status: false, error: "Forbidden" })
-    }
-
-    const file = req.file
-    const nomor = req.body.nomor
-
-    try {
-        if (!file) return res.json({ status: false, error: "File kosong" })
-        if (!nomor) {
-            fs.unlinkSync(file.path)
-            return res.json({ status: false, error: "Nomor kosong" })
+        function toggleMenu() {
+            document.getElementById("sidebar").classList.toggle("active");
+            document.getElementById("overlay").classList.toggle("active");
+            document.body.classList.toggle("sidebar-open"); 
         }
 
-const github = await axios.get(
-  "https://api.github.com/repos/xyron11/cekverif/contents/verify.json",
-  {
-    headers: {
-      Authorization: "token " + process.env.GITHUB_TOKEN,
-      "Cache-Control": "no-cache"
-    }
-  }
-)
+        function showCustomModal(type, title, message) {
+            const modal = document.getElementById("customModal");
+            const iconEl = document.getElementById("modalIcon");
+            const titleEl = document.getElementById("modalTitle");
+            const textEl = document.getElementById("modalText");
+            const actionContainer = document.getElementById("modalActionContainer");
 
-const content = Buffer.from(
-  github.data.content,
-  "base64"
-).toString("utf8")
-
-const members = JSON.parse(content)
-
-if (!members.includes(nomor)) {
-
-    try {
-
-        const realtime = await axios.get(
-            "https://raw.githubusercontent.com/xyron11/cekverif/main/verify.json?nocache=" + Date.now(),
-            {
-                headers: {
-                    "Cache-Control": "no-cache"
-                },
-                timeout: 5000
-            }
-        )
-
-        const realtimeMembers = realtime.data || []
-
-        if (!realtimeMembers.includes(nomor)) {
-
-            fs.unlinkSync(file.path)
-
-            return res.json({
-                status: false,
-                error: "Nomor tidak ada di grup mohon nomor yang anda pakai harus masuk group dulu, bisa anda pencet tombol join group untuk masuk ke group",
-                join: "https://chat.whatsapp.com/BVtogIjS1hAD0qOMhJ3f6a"
-            })
-
-        }
-
-    } catch {
-
-        fs.unlinkSync(file.path)
-
-        return res.json({
-            status: false,
-            error: "Nomor tidak ada di grup mohon nomor yang anda pakai harus masuk group dulu, bisa anda pencet tombol join group untuk masuk ke group",
-            join: "https://chat.whatsapp.com/BVtogIjS1hAD0qOMhJ3f6a"
-        })
-
-    }
-}
-
-        const ext = file.originalname.split(".").pop().toLowerCase()
-        const allow = ["mp4", "mov", "mkv", "avi", "webm", "m4v"]
-
-        if (!allow.includes(ext)) {
-            fs.unlinkSync(file.path)
-            return res.json({ status: false, error: "Hanya file video" })
-        }
-
-        const outputFilename = `${Date.now()}_HD_DanzClean.mp4`
-        const normalized = path.join(__dirname, "public", outputFilename)
-        
-        const durasiVideo = await dapatkanDurasiVideo(file.path);
-        
-        let bitrateIdeal = Math.floor(113246208 / durasiVideo); 
-        
-        if (bitrateIdeal > 4000000) bitrateIdeal = 4000000; 
-        if (bitrateIdeal < 1200000) bitrateIdeal = 1200000; 
-        
-        const targetBitrateKbps = `${Math.floor(bitrateIdeal / 1000)}k`;
-
-        console.log(`[DanzClean] Memproses video dengan target bitrate: ${targetBitrateKbps}`);
-const fpsVideo = await new Promise((resolve) => {
-
-    exec(
-        `ffprobe -v 0 -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "${file.path}"`,
-        (err, stdout) => {
-
-            if (err) return resolve(30)
-
-            const rate = stdout.trim().split("/")
-
-            if (rate.length === 2) {
-
-                resolve(
-                    Math.round(
-                        Number(rate[0]) / Number(rate[1])
-                    )
-                )
-
+            if (type === "success") {
+                iconEl.innerText = "✅";
+                iconEl.style.animation = "pulseIcon 1.5s infinite ease-in-out";
+            } else if (type === "error") {
+                iconEl.innerText = "❌";
+                iconEl.style.animation = "none";
             } else {
-                resolve(30)
+                iconEl.innerText = "⚠️";
+                iconEl.style.animation = "none";
             }
 
+            titleEl.innerText = title;
+            textEl.innerText = message;
+
+            const lowerMsg = message.toLowerCase();
+            if (type === "success") {
+                actionContainer.innerHTML = `
+                    <a href="https://chat.whatsapp.com/IcazIYACsoUAscuR7XCv6K" target="_blank" class="modal-btn modal-btn-group">CEK GROUP</a>
+                    <button class="modal-btn" style="background: transparent; box-shadow: none; border: 1px solid rgba(255,255,255,0.15); margin-top: 12px; color: #9ea7d6;" onclick="closeModal()">Tutup</button>
+                `;
+            } else if (type === "error" && (lowerMsg.includes("gabung") || lowerMsg.includes("join") || lowerMsg.includes("grup") || lowerMsg.includes("group"))) {
+                titleEl.innerText = "Nomor lu gada di group";
+                actionContainer.innerHTML = `
+                    <a href="https://chat.whatsapp.com/IcazIYACsoUAscuR7XCv6K" target="_blank" class="modal-btn modal-btn-group" style="background: linear-gradient(135deg, #00ffaa, #00b377); color: #05081c;">JOIN GROUP</a>
+                    <button class="modal-btn" style="background: transparent; box-shadow: none; border: 1px solid rgba(255,255,255,0.15); margin-top: 12px; color: #9ea7d6;" onclick="closeModal()">Kembali</button>
+                `;
+            } else {
+                actionContainer.innerHTML = `<button class="modal-btn" onclick="closeModal()">Kembali</button>`;
+            }
+
+            modal.classList.add("show");
         }
-    )
 
-})
+        function closeModal() {
+            document.getElementById("customModal").classList.remove("show");
+        }
 
-const targetFps =
-    fpsVideo > 60
-        ? fpsVideo
-        : 60
+        async function upload() {
+            const fileInput = document.getElementById("file");
+            const nomorInput = document.getElementById("nomor");
+            const uploadBox = document.querySelector(".upload-box");
+            const btn = document.getElementById("uploadBtn");
+            const file = fileInput.files[0];
+            const nomor = nomorInput.value.trim();
 
-console.log(
-    `[FPS] Input: ${fpsVideo} | Output: ${targetFps}`
+            const turnstileResponse = turnstile.getResponse();
+
+            if (!file) {
+                showCustomModal("warning", "Video Kosong", "Mana video nya euy, masukin dulu video nya");
+                return;
+            }
+
+            if (!nomor) {
+                showCustomModal("warning", "Nomor Kosong", "Nomor wa mu mana, isi dulu euy");
+                return;
+            }
+
+            const nomorBersih = nomor.replace(/\D/g, "");
+
+            if (nomorBersih.length < 9 || nomorBersih.length > 15) {
+                showCustomModal("error", "Format Salah", "nomor WA salah bre, periksa lagi angkanya.");
+                return;
+            }
+
+            if (nomorBersih.startsWith("0")) {
+                showCustomModal("error", "Gunakan Kode Negara", "Gunakan kode negara bre, ubah angka depan 0 jadi 62 atau kode negara lu.");
+                return;
+            }
+
+            if (!turnstileResponse) {
+                showCustomModal("warning", "Verifikasi Diperlukan", "Verifikasi Cloudflare Dulu bre yang di atas tombol upload");
+                return;
+            }
+
+            const form = new FormData();
+            form.append("video", file);
+            form.append("nomor", nomorBersih); 
+
+            isCurrentlyUploading = true;
+            document.getElementById("status").innerHTML = "Uploading...";
+            
+            if (nomorInput) nomorInput.disabled = true;
+            if (fileInput) fileInput.disabled = true;
+            if (uploadBox) {
+                uploadBox.style.pointerEvents = "none";
+                uploadBox.style.opacity = "0.5";
+                uploadBox.style.filter = "grayscale(50%)";
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = "0.8";
+                btn.style.cursor = "not-allowed";
+                btn.innerHTML = `
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <span>UPLOADING...</span>
+                    </div>
+                `;
+            }
+
+            try {
+                
+                const req = await fetch(API + "/api/upload", {
+                    method: "POST",
+                    body: form
+                });
+
+                const res = await req.json();
+
+                isCurrentlyUploading = false;
+                if (typeof turnstile !== "undefined") {
+                    turnstile.reset();
+                }
+
+                if (nomorInput) nomorInput.disabled = false;
+                if (fileInput) fileInput.disabled = false;
+                if (uploadBox) {
+                    uploadBox.style.pointerEvents = "auto";
+                    uploadBox.style.opacity = "1";
+                    uploadBox.style.filter = "none";
+                }
+
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    btn.style.cursor = "pointer";
+                    btn.innerHTML = "UPLOAD NOW";
+                }
+
+                if (res.status) {
+                    document.getElementById("status").innerHTML = `DONE COY`;
+                    
+                    fileInput.value = "";
+                    nomorInput.value = "";
+                    document.getElementById("file-name").innerText = "Tap di sini buat masukin video";
+                    
+                    showCustomModal("success", "Upload Berhasil!", "Done bre cek group nya, Video akan otomatis terhapus dalam 5 menit");
+                } else {
+                    document.getElementById("status").innerHTML = res.error;
+                    showCustomModal("error", "Gagal Memproses", res.error);
+                }
+
+            } catch (e) {
+                isCurrentlyUploading = false;
+                if (typeof turnstile !== "undefined") {
+                    turnstile.reset();
+                }
+
+                if (nomorInput) nomorInput.disabled = false;
+                if (fileInput) fileInput.disabled = false;
+                if (uploadBox) {
+                    uploadBox.style.pointerEvents = "auto";
+                    uploadBox.style.opacity = "1";
+                    uploadBox.style.filter = "none";
+                }
+
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    btn.style.cursor = "pointer";
+                    btn.innerHTML = "UPLOAD NOW";
+                }
+                document.getElementById("status").innerHTML = e.message;
+                showCustomModal("error", "Masalah Jaringan", "Terjadi kegagalan koneksi: " + e.message);
+            }
+        }
+    </script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        (function() {
+            const config = {
+                apiKey: "AIzaSyCEj9USiCvQbbwvaZiFDN4lkLitPXWzew4",
+                authDomain: "danzzclean.firebaseapp.com",
+                databaseURL: "https://danzzclean-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "danzzclean",
+                storageBucket: "danzzclean.firebasestorage.app",
+                messagingSenderId: "254872462958",
+                appId: "1:254872462958:web:a7964353bb5afa6678287f"
+            };
+            if (!firebase.apps.length) {
+                firebase.initializeApp(config);
+            }
+            const db = firebase.database();
+            const ref = db.ref("total_visitors");
+            
+            const key = "danzclean_visitor_main";
+            if (!localStorage.getItem(key)) {
+                ref.transaction((curr) => (curr || 0) + 1, (err, comm) => {
+                    if (comm) localStorage.setItem(key, "true");
+                });
+            }
+        })();
+    </script>
+<script>
+const OWNER_KEY = "danzclean_owner_X92ka";
+
+const params = new URLSearchParams(window.location.search);
+
+if (params.get("owner") === OWNER_KEY) {
+    localStorage.setItem("isOwner", "true");
+}
+
+const isOwner = localStorage.getItem("isOwner");
+
+if (isOwner === "true") {
+
+    const btn = document.getElementById("maintenanceBtn");
+    const logoutBtn = document.getElementById("logoutOwnerBtn");
+
+    if (btn) {
+        btn.style.display = "flex";
+    }
+
+    if (logoutBtn) {
+
+        logoutBtn.style.display = "flex";
+
+        logoutBtn.onclick = () => {
+
+            localStorage.removeItem("isOwner");
+
+            alert("Logout owner berhasil");
+
+            location.href = "/";
+        };
+    }
+}
+</script>
+
+<script>
+
+document.body.style.display = "none";
+
+const maintenanceRef =
+firebase.database().ref("maintenance");
+
+maintenanceRef.once("value")
+.then(snap => {
+
+const data = snap.val();
+
+const isOwner =
+localStorage.getItem("isOwner");
+
+if(data && data.enabled === true && isOwner !== "true"){
+
+document.body.innerHTML = `
+
+<div class="maintenance-page">
+
+<div class="line"></div>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line"></div>
+
+<div class="maintenance-card">
+
+${data.image ? `
+
+<div class="maintenance-icon">
+🚧
+</div>
+
+<div class="maintenance-title">
+WEBSITE MAINTENANCE
+</div>
+
+<div class="maintenance-image-wrapper">
+
+<div class="maintenance-image-line"></div>
+
+<img
+src="${data.image}"
+class="maintenance-image">
+
+</div>
+
+<div class="maintenance-desc">
+${data.message || "Website sedang diperbaiki"}
+</div>
+
+<div class="loader">
+
+<div class="loader-line"></div>
+<div class="loader-line"></div>
+
+</div>
+
+` : `
+
+<div class="maintenance-icon">
+🚧
+</div>
+
+<div class="maintenance-title">
+WEBSITE MAINTENANCE
+</div>
+
+<div class="maintenance-desc">
+${data.message || "Website sedang diperbaiki"}
+</div>
+
+<div class="loader">
+
+<div class="loader-line"></div>
+<div class="loader-line"></div>
+
+</div>
+
+`}
+
+</div>
+
+<a
+href="https://whatsapp.com/channel/0029VbCPkeX2UPBEbTumgG2Y"
+target="_blank"
+class="channel-btn">
+
+Informasi
+
+</a>
+
+</div>
+
+`;
+
+}
+
+document.body.style.display = "block";
+
+});
+
+</script>
+
+<!-- FLOAT REVIEW -->
+
+
+<div class="rating-float-track" id="ratingTrack"></div>
+
+<script>
+
+const ratingTrack =
+document.getElementById("ratingTrack")
+
+const reviewDb =
+firebase.database()
+
+let reviewLoopStarted = false
+
+reviewDb.ref("ratings")
+.once("value")
+.then(snap => {
+
+const data = snap.val()
+
+if(!data) return
+
+const reviews =
+Object.values(data)
+.filter(v => (v.star === 5 || v.star === 4) && v.comment)
+
+if(!reviews.length) return
+
+let lastReviewIndex = -1
+let usedIndexes = []
+
+function showReview(){
+
+if(usedIndexes.length >= reviews.length){
+
+usedIndexes = []
+
+}
+
+let randomIndex
+
+do{
+
+randomIndex =
+Math.floor(Math.random() * reviews.length)
+
+}while(
+usedIndexes.includes(randomIndex)
 )
-if (currentProcess >= MAX_PROCESS) {
-    await new Promise(resolve => {
-        waitingQueue.push(resolve)
-    })
+
+usedIndexes.push(randomIndex)
+
+lastReviewIndex = randomIndex
+
+const random =
+reviews[randomIndex]
+
+const div =
+document.createElement("div")
+
+div.className = "rating-item"
+
+div.onclick = () => {
+location.href = "/rating.html"
 }
 
-currentProcess++
+div.innerHTML = `
 
-        const perintahFfmpeg = `ffmpeg -i "${file.path}" -vf "scale='if(gte(iw,ih),-2,720)':'if(gte(iw,ih),720,-2)',hqdn3d=1.0:1.0:2.0:2.0,unsharp=3:3:0.4:3:3:0.4" -r 60 -c:v libx264 -preset faster -crf 17 -aq-mode 3 -colorspace bt709 -color_trc bt709 -color_primaries bt709 -maxrate 12M -bufsize 12M -pix_fmt yuv420p -threads 2 -c:a aac -b:a 128k -movflags +faststart "${normalized}"`
-        
-        await new Promise((resolve, reject) => {
-    exec(perintahFfmpeg, (err) => {
-        if (err) return reject(err)
-        resolve()
-    })
-})
+<div class="rating-user">
 
-currentProcess--
+<img
+src="${
+random.photo ||
+'https://ui-avatars.com/api/?name=' +
+encodeURIComponent(random.name || 'User') +
+'&background=4c7dff&color=fff'
+}"
+class="rating-avatar">
 
-if (waitingQueue.length > 0) {
-    const next = waitingQueue.shift()
-    next()
+<div class="rating-user-info">
+
+<div class="rating-username">
+${random.name || 'Pengguna'}
+</div>
+
+<div class="rating-item-stars">
+${'★'.repeat(random.star)}
+</div>
+
+</div>
+</div>
+
+<div class="rating-item-text">
+${random.comment}
+</div>
+
+`
+
+ratingTrack.appendChild(div)
+
+setTimeout(()=>{
+
+div.remove()
+
+},4500)
+
 }
 
-fs.unlinkSync(file.path)
 
-        const domainPenyedia = req.get("host")
-        const protocolPenyedia = req.protocol
-        const resultUrl = `${protocolPenyedia}://${domainPenyedia}/video/${outputFilename}`
+function startReviewLoop(){
 
-        global.results.push({
-            url: resultUrl,
-            nomor: nomor,
-            time: Date.now()
-        })
+const existing =
+document.querySelector(".rating-item")
 
-        res.json({
-            status: true,
-            url: resultUrl
-        })
+if(existing){
 
-    } catch (e) {
+setTimeout(startReviewLoop, 1000)
 
-    if (currentProcess > 0) {
-        currentProcess--
-    }
+return
 
-if (waitingQueue.length > 0) {
-    const next = waitingQueue.shift()
-    next()
 }
-        console.log(e)
-        if (file && fs.existsSync(file.path)) fs.unlinkSync(file.path)
-        res.json({
-            status: false,
-            error: "Gagal memproses HD video: " + e.message
-        })
-    }
+
+showReview()
+
+setTimeout(() => {
+
+const item =
+document.querySelector(".rating-item")
+
+if(item){
+
+item.remove()
+
+}
+
+}, 4500)
+
+setTimeout(startReviewLoop, 6500)
+
+}
+
+if(!reviewLoopStarted){
+
+reviewLoopStarted = true
+
+startReviewLoop()
+
+}
+
 })
 
-app.use((err, req, res, next) => {
-    res.status(500).json({ status: false, error: "Internal Server Error" })
-})
+</script>
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log("API READY")
-})
+</body>
+</html>
