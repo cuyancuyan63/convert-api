@@ -257,7 +257,8 @@ currentProcess++
         });
 
 
-        exec(perintahFfmpeg, (err) => {
+
+        exec(perintahFfmpeg, { maxBuffer: 1024 * 1024 * 15 }, (err) => {
             currentProcess--;
 
             if (waitingQueue.length > 0) {
